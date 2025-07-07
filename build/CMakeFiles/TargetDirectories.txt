@@ -1,0 +1,7 @@
+/home/prateek/Geant4_thread_safe/build/CMakeFiles/tungsten_sim.dir
+/home/prateek/Geant4_thread_safe/build/CMakeFiles/edit_cache.dir
+/home/prateek/Geant4_thread_safe/build/CMakeFiles/rebuild_cache.dir
+/home/prateek/Geant4_thread_safe/build/CMakeFiles/list_install_components.dir
+/home/prateek/Geant4_thread_safe/build/CMakeFiles/install.dir
+/home/prateek/Geant4_thread_safe/build/CMakeFiles/install/local.dir
+/home/prateek/Geant4_thread_safe/build/CMakeFiles/install/strip.dir
