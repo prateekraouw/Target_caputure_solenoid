@@ -98,6 +98,9 @@ private:
     G4LogicalVolume* fWorldLogical;
     G4LogicalVolume* fScoringVolume;
     G4LogicalVolume* fTungstenApertureVolume;
+    G4LogicalVolume* fBore_1;
+    G4LogicalVolume* fBore_2;
+    G4LogicalVolume* fBore_3;
     G4LogicalVolume* fDetector1Volume;
     G4LogicalVolume* fDetector2Volume;
     G4LogicalVolume* fDetector3Volume;

@@ -18,6 +18,9 @@
 DetectorConstruction::DetectorConstruction(G4double g1, G4double g2)
 : G4VUserDetectorConstruction(),
   fTungstenApertureVolume(nullptr),
+  fBore_1(nullptr),
+  fBore_2(nullptr),
+  fBore_3(nullptr),
   fSolenoidSystem1(nullptr),
   fSolenoidSystem2(nullptr),
   fSolenoidSystem3(nullptr),
@@ -158,6 +161,28 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     gunRot->rotateX(0.*deg);
     G4ThreeVector gunPos = G4ThreeVector(0, 0.*m, -2.0*m);
     new G4PVPlacement(gunRot, gunPos, gunLog, "GunBlock", logicWorld, false, 0, true);
+
+    //===========Tungsten Bore===========
+    G4double bore_1_position = 1.5*meter;
+    G4Tubs* bore_1 = new G4Tubs("Bore_1", 7.5*cm, 70*cm, 3.0*m, 0*deg, 360*deg);
+    G4LogicalVolume* logicBore_1 = new G4LogicalVolume(bore_1, tungsten_mat, "Bore_1");
+    fBore_1 = logicBore_1;
+    G4ThreeVector fBore1_position = G4ThreeVector(0, 0, bore_1_position);
+    new G4PVPlacement(nullptr, fBore1_position, logicBore_1, "Bore_1", logicWorld, false, 0, false);
+    
+    G4double bore_2_position = 7.75*meter;
+    G4Tubs* bore_2 = new G4Tubs("Bore_2", 15*cm, 70*cm, 3.19*m, 0*deg, 360*deg);
+    G4LogicalVolume* logicBore_2 = new G4LogicalVolume(bore_2, tungsten_mat, "Bore_2");
+    fBore_2 = logicBore_2;
+    G4ThreeVector fBore2_position = G4ThreeVector(0, 0, bore_2_position);
+    new G4PVPlacement(nullptr, fBore2_position, logicBore_2, "Bore_2", logicWorld, false, 0, false);
+    
+    G4double bore_3_position = 14.30*meter;
+    G4Tubs* bore_3 = new G4Tubs("Bore_3", 30*cm, 70*cm, 3.28*m, 0*deg, 360*deg);
+    G4LogicalVolume* logicBore_3 = new G4LogicalVolume(bore_3, tungsten_mat, "Bore_3");
+    fBore_3 = logicBore_3;
+    G4ThreeVector fBore3_position = G4ThreeVector(0, 0, bore_3_position);
+    new G4PVPlacement(nullptr, fBore3_position, logicBore_3, "Bore_3", logicWorld, false, 0, false);
 
 
     G4cout << "Creating Solenoid 1..." << G4endl;
