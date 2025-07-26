@@ -290,15 +290,15 @@ void SolenoidSystem::SetAirSolenoidVisualization(G4LogicalVolume* solenoidLogica
     G4double fraction = (radius - minRadius) / (maxRadius - minRadius);
 
     // Blue → Red gradient for field visualization
-    G4double red = 0.1 + 0.8 * (1.0 - fraction);   // More red for smaller radius (stronger field)
-    G4double green = 0.1 + 0.2 * fraction;         // Slight green component
-    G4double blue = 0.2 + 0.7 * fraction;          // More blue for larger radius
-    G4double alpha = 0.3;                           // Semi-transparent for field visualization
+    G4double red = 1.0;   // More red for smaller radius (stronger field)
+    G4double green = 1.0;         // Slight green component
+    G4double blue = 1.0;          // More blue for larger radius
+    G4double alpha = 0;                           // Semi-transparent for field visualization
 
-    G4VisAttributes* fieldVis = new G4VisAttributes(G4Color(red, green, blue, alpha));
+    G4VisAttributes* fieldVis = new G4VisAttributes(G4Color(red,green,blue,alpha));
     fieldVis->SetVisibility(true);
     fieldVis->SetForceSolid(false);  // Wireframe for field volume
-    fieldVis->SetForceWireframe(true);
+    fieldVis->SetForceWireframe(false);
     solenoidLogical->SetVisAttributes(fieldVis);
 
     G4cout << "  Field visualization: radius " << radius/cm
@@ -333,6 +333,20 @@ G4double SolenoidFringeField::FringeFieldFactor(G4double z) const
 
 void SolenoidFringeField::CalculateFringeField(G4double rho, G4double z, G4double* field) const
 {
+
+    //Aperture definition
+    G4double systemLength = 18.79*m;
+    G4double systemCenter = 8.095*m;
+    G4double zPoint = z - systemCenter;
+    G4double endradius = 0.30*m;
+    G4double startRadius = 0.075*m;
+    G4double halfLength = systemLength / 2;
+    G4double fraction = (zPoint + halfLength) / systemLength;
+
+    fraction = std::max(0.0, std::min(1.0, fraction));
+
+    G4double Rz = startRadius + (endradius - startRadius) * fraction;
+
     // Get the fringe factor for axial position
     G4double fringeFactor = FringeFieldFactor(z);
 
@@ -340,13 +354,17 @@ void SolenoidFringeField::CalculateFringeField(G4double rho, G4double z, G4doubl
         return; // No field
     }
 
-    // Axial field component with fringe effects
+    /*if(rho > Rz){
+        field[0]=field[1]=field[2]= 0.0;
+        return;
+        }*/
+
     field[2] = fBz0*fringeFactor;
 
     // Radial field component from fringe effects
     // Br = -(rho/2) * dBz/dz
     if (rho > 0) {
-        G4double deltaZ = 0.001 * fRadius; // Small step for numerical derivative
+        G4double deltaZ = 0.001 * Rz; // Small step for numerical derivative
         G4double fringeFactorPlus = FringeFieldFactor(z + deltaZ);
         G4double fringeFactorMinus = FringeFieldFactor(z - deltaZ);
 

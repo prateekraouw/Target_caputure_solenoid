@@ -15,19 +15,19 @@
 int main(int argc, char** argv){
   // Remove this line to actually run the simulation
   // if(true)return 0;
-  
+
   G4Random::setTheEngine(new CLHEP::RanecuEngine);
-  
+
   // Construct the default run manager
   auto* runManager = G4RunManagerFactory::CreateRunManager();
 #ifdef G4MULTITHREADED
     // Set number of threads (default: 10)
-    static_cast<G4MTRunManager*>(runManager)->SetNumberOfThreads(10);
+    static_cast<G4MTRunManager*>(runManager)->SetNumberOfThreads(15);
     G4cout << "Geant4 running with "
            << static_cast<G4MTRunManager*>(runManager)->GetNumberOfThreads()
            << " threads." << G4endl;
 #endif
-  
+
   // Set mandatory initialization classes
   // Use DetectorConstruction instead of ChicaneConstruction
   if (argc >= 4) {
@@ -39,17 +39,17 @@ int main(int argc, char** argv){
   }
   runManager->SetUserInitialization(new PhysicsList());
   runManager->SetUserInitialization(new ActionInitialization());
-  
+
   // Initialize G4 kernel
   runManager->Initialize();
-  
+
   // Initialize visualization
   G4VisManager* visManager = new G4VisExecutive();
   visManager->Initialize();
-  
+
   // Get the pointer to the User Interface manager
   G4UImanager* UImanager = G4UImanager::GetUIpointer();
-  
+
   if (argc != 1) {
     // Batch mode
     G4String command = "/control/execute ";
@@ -63,10 +63,10 @@ int main(int argc, char** argv){
     ui->SessionStart();
     delete ui;
   }
-  
+
   // Job termination
   delete visManager;
   delete runManager;
-  
+
   return 0;
 }

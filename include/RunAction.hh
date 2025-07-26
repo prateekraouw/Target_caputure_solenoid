@@ -49,7 +49,7 @@ class RunAction : public G4UserRunAction
     // File stream for 6D vector output
     std::ofstream file6DVector;
 
-    // Buffered output members
+    // Per-thread buffers for output
     std::vector<std::pair<G4String, G4double>> fParticleData;
     std::vector<std::tuple<G4int, G4String, G4ThreeVector, G4ThreeVector, G4double>> f6DVectorData;
     std::mutex fDataMutex;

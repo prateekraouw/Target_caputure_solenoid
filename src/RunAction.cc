@@ -9,12 +9,13 @@
 #include <vector>
 #include <mutex>
 #include "G4MTRunManager.hh"
+#include "G4Threading.hh"
+#include <sstream>
 
 RunAction::RunAction()
 : G4UserRunAction()
 {
-  // Open the 6D vector file
-  Open6DVectorFile();
+    // No accumulable registration needed
 }
 
 RunAction::~RunAction()
@@ -53,63 +54,40 @@ void RunAction::BeginOfRunAction(const G4Run* run)
 
 void RunAction::EndOfRunAction(const G4Run* run)
 {
-  if (!G4Threading::IsMasterThread()) return;
-  
-  G4int nofEvents = run->GetNumberOfEvent();
-  if (nofEvents == 0) return;
-  
-  // Print simple particle summary
-  G4cout << "\n=== PARTICLE SUMMARY ===" << G4endl;
-  for (const auto& pair : fParticleCounts) {
-    G4cout << pair.first << ": " << pair.second << G4endl;
-  }
-  G4cout << "=========================" << G4endl;
-  
-  // Write particle data to file
-  G4String fileName = "particle_data" + std::to_string(run->GetRunID()) + ".csv";
-  fOutputFile.open(fileName);
-  if (fOutputFile.is_open()) {
-    fOutputFile << "ParticleType,Energy" << std::endl;
+    // Write per-thread particle data
+    std::ostringstream filename;
+    filename << "particle_data_thread" << G4Threading::G4GetThreadId() << ".csv";
+    std::ofstream out(filename.str());
+    out << "ParticleType,Energy" << std::endl;
     for (const auto& entry : fParticleData) {
-      fOutputFile << entry.first << "," << entry.second/MeV << std::endl;
+        out << entry.first << "," << entry.second/MeV << std::endl;
     }
-    fOutputFile.close();
-    G4cout << "Particle data saved to Excel file" << G4endl;
-  }
-  
-  // Write 6D vector data to file
-  std::string filename = "6D_vector.csv";
-  file6DVector.open(filename, std::ios::out);
-  if (file6DVector.is_open()) {
-    file6DVector << "Detector,ParticleType,x[cm],px[MeV/c],y[cm],py[MeV/c],z[cm],pz[MeV/c],TotalEnergy[MeV]" << std::endl;
-    for (const auto& entry : f6DVectorData) {
-      file6DVector << std::get<0>(entry) << ","
-                   << std::get<1>(entry) << ","
-                   << std::get<2>(entry).x()/cm << ","
-                   << std::get<3>(entry).x()/MeV << ","
-                   << std::get<2>(entry).y()/cm << ","
-                   << std::get<3>(entry).y()/MeV << ","
-                   << std::get<2>(entry).z()/cm << ","
-                   << std::get<3>(entry).z()/MeV << ","
-                   << std::get<4>(entry)/MeV << std::endl;
-    }
-    file6DVector.close();
-    G4cout << "6D vector data flushed to disk" << G4endl;
-  }
+    out.close();
 
-  //SaveMagneticFieldAlongZ();
+    // Write per-thread 6D vector data
+    std::ostringstream filename6D;
+    filename6D << "6D_vector_thread" << G4Threading::G4GetThreadId() << ".csv";
+    std::ofstream out6D(filename6D.str());
+    out6D << "Detector,ParticleType,x[cm],px[MeV/c],y[cm],py[MeV/c],z[cm],pz[MeV/c],TotalEnergy[MeV]" << std::endl;
+    for (const auto& entry : f6DVectorData) {
+        out6D << std::get<0>(entry) << ","
+              << std::get<1>(entry) << ","
+              << std::get<2>(entry).x()/cm << "," << std::get<3>(entry).x()/MeV << ","
+              << std::get<2>(entry).y()/cm << "," << std::get<3>(entry).y()/MeV << ","
+              << std::get<2>(entry).z()/cm << "," << std::get<3>(entry).z()/MeV << ","
+              << std::get<4>(entry)/MeV << std::endl;
+    }
+    out6D.close();
 }
 
 void RunAction::RecordParticleToExcel(const G4String& name, const G4double& kineticEnergy)
 {
-  std::lock_guard<std::mutex> lock(fDataMutex);
   fParticleData.emplace_back(name, kineticEnergy);
   CountParticle(name);
 }
 
 void RunAction::Record6DVector(G4int detectorID, const G4String& particleName, const G4ThreeVector& position, const G4ThreeVector& momentum, G4double totalEnergy)
 {
-  std::lock_guard<std::mutex> lock(fDataMutex);
   f6DVectorData.emplace_back(detectorID, particleName, position, momentum, totalEnergy);
 }
 

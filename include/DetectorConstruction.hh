@@ -4,7 +4,7 @@
 #include "G4VUserDetectorConstruction.hh"
 #include "globals.hh"
 #include "G4ThreeVector.hh"
-#include "G4MagneticField.hh"  
+#include "G4MagneticField.hh"
 #include "G4FieldManager.hh"
 #include "SolenoidSystem.hh"
 #include "MomentumChicane.hh"
@@ -20,7 +20,7 @@ public:
     ~DetectorConstruction() override;
     G4VPhysicalVolume* Construct() override;
     void ConstructSDandField() override;
-    
+
     // Original getters
     G4LogicalVolume* GetScoringVolume() const { return fScoringVolume; }
     G4LogicalVolume* GetDetector1Volume() const { return fDetector1Volume; }
@@ -28,7 +28,7 @@ public:
     G4LogicalVolume* GetDetector3Volume() const { return fDetector3Volume; }
     G4LogicalVolume* GetDetector4Volume() const { return fDetector4Volume; }
     G4LogicalVolume* GetRFCavityVolume() const { return fRFCavityVolume; }
-    
+
     // Original position getters
     G4ThreeVector GetDetector1Position() const { return fDetector1Position; }
     G4ThreeVector GetDetector2Position() const { return fDetector2Position; }
@@ -59,14 +59,14 @@ public:
     SolenoidSystem* GetSolenoidSystem21() const { return fSolenoidSystem21; }
     SolenoidSystem* GetSolenoidSystem22() const { return fSolenoidSystem22; }
     SolenoidSystem* GetSolenoidSystem23() const { return fSolenoidSystem23; }
-    
+
     MomentumChicane* GetMomentumChicane() const { return fMomentumChicane; }
     G4LogicalVolume* GetPrimaryCollimatorVolume() const { return fPrimaryCollimatorVolume; }
     G4LogicalVolume* GetSecondaryCollimatorVolume() const { return fSecondaryCollimatorVolume; }
 
     // Analysis methods
     void AnalyzeCompleteSystem();
-    
+
 private:
     // New advanced systems
     SolenoidSystem* fSolenoidSystem1;
@@ -93,12 +93,11 @@ private:
     SolenoidSystem* fSolenoidSystem22;
     SolenoidSystem* fSolenoidSystem23;
     MomentumChicane* fMomentumChicane;
-    
+
     // Original members (unchanged)
     G4LogicalVolume* fWorldLogical;
     G4LogicalVolume* fScoringVolume;
-    G4LogicalVolume* fTungstenApertureVolume;
-    G4LogicalVolume* fBore_1;
+    G4LogicalVolume* fBore;
     G4LogicalVolume* fBore_2;
     G4LogicalVolume* fBore_3;
     G4LogicalVolume* fDetector1Volume;
@@ -109,18 +108,18 @@ private:
     G4LogicalVolume* fInitialSolenoidVolume;
     G4MagneticField* fInitialSolenoidField;
     G4FieldManager* fInitialSolenoidFieldManager;
-    
+
     // New collimator volumes
     G4LogicalVolume* fPrimaryCollimatorVolume;
     G4LogicalVolume* fSecondaryCollimatorVolume;
-    
+
     // Original detector positions
     G4ThreeVector fTungstenAperturePosition;
     G4ThreeVector fDetector1Position;
     G4ThreeVector fDetector2Position;
     G4ThreeVector fDetector3Position;
     G4ThreeVector fDetector4Position;
-    
+
     G4double fGap1, fGap2;
 
     // New methods
@@ -137,7 +136,7 @@ class UniformMagField : public G4MagneticField
 public:
     UniformMagField(const G4ThreeVector& fieldVector) : fFieldValue(fieldVector) {}
     virtual ~UniformMagField() {}
-    
+
     virtual void GetFieldValue(const G4double[4], G4double* field) const override {
         field[0] = fFieldValue.x();
         field[1] = fFieldValue.y();
@@ -146,7 +145,7 @@ public:
         field[4] = 0.0;
         field[5] = 0.0;
     }
-    
+
 private:
     G4ThreeVector fFieldValue;
 };

@@ -3,6 +3,7 @@
 #include "G4NistManager.hh"
 #include "G4Box.hh"
 #include "G4Tubs.hh"
+#include "G4Cons.hh"
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 #include "G4SystemOfUnits.hh"
@@ -17,8 +18,7 @@
 
 DetectorConstruction::DetectorConstruction(G4double g1, G4double g2)
 : G4VUserDetectorConstruction(),
-  fTungstenApertureVolume(nullptr),
-  fBore_1(nullptr),
+  fBore(nullptr),
   fBore_2(nullptr),
   fBore_3(nullptr),
   fSolenoidSystem1(nullptr),
@@ -125,8 +125,30 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4Material* world_mat = nist->FindOrBuildMaterial("G4_AIR");
     G4Material* graphite_mat = nist->FindOrBuildMaterial("G4_GRAPHITE");
     G4Material* tungsten_mat = nist->FindOrBuildMaterial("G4_W");
+    G4Material* beryllium = nist->FindOrBuildMaterial("G4_Be");
     G4Material* scintillator_mat = nist->FindOrBuildMaterial("G4_Ar");
     G4Material* rfcavity_mat = nist->FindOrBuildMaterial("G4_Galactic");
+    
+    G4double A;  // atomic mass
+    G4double Z;  // atomic number
+    A  =  54.94*g/mole;
+    G4Element* elMn   =  new G4Element("Manganese","Mn",Z = 25.,A); 
+    A = 28.09*g/mole;
+    G4Element* elSi  = new G4Element("Silicon","Si",Z = 14.,A);
+    A = 52.00*g/mole;
+    G4Element* elCr  = new G4Element("Chromium","Cr",Z = 24.,A); 
+    A = 58.70*g/mole;
+    G4Element* elNi  = new G4Element("Nickel","Ni",Z = 28.,A);
+    A = 55.85*g/mole;
+    G4Element* elFe  = new G4Element("Iron","Fe",Z = 26.,A);  
+    
+    G4double density = 8.02*g/cm3;
+    G4Material* matSteel = new G4Material("StainlessSteel", density, 5); // 5 elements
+    matSteel->AddElement(elFe, 0.68); // Example: 68% Iron
+    matSteel->AddElement(elCr, 0.19); // Example: 19% Chromium
+    matSteel->AddElement(elNi, 0.10); // Example: 10% Nickel
+    matSteel->AddElement(elMn, 0.02); // Example: 2% Manganese
+    matSteel->AddElement(elSi, 0.01); // Example: 1% Silicon
 
     // ========== WORLD VOLUME ==========
     G4double world_size = 10000*cm;
@@ -141,17 +163,17 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
                                                     "World", nullptr, false, 0, true);
 
     // ========== TUNGSTEN TARGET ==========
-    G4double tungsten_x = 10*cm;
-    G4double tungsten_y = 10*cm;
-    G4double tungsten_z = 80*cm;
+    G4double block_x = 10*cm;
+    G4double block_y = 10*cm;
+    G4double block_z = 40*cm;
 
-    G4Box* solidGraphite = new G4Box("Graphite", 0.5*tungsten_x, 0.5*tungsten_y, 0.5*tungsten_z);
+    G4Box* solidGraphite = new G4Box("Graphite", 0.5*block_x, 0.5*block_y, 0.5*block_z);
     G4LogicalVolume* logicTungsten = new G4LogicalVolume(solidGraphite, graphite_mat, "Graphite");
 
     G4RotationMatrix* rotation = new G4RotationMatrix();
-    rotation->rotateX(0*deg);
+    rotation->rotateX(0*rad);
 
-    new G4PVPlacement(rotation, G4ThreeVector(0, 0, -1.1*m), logicTungsten, "Tungsten",
+    new G4PVPlacement(rotation, G4ThreeVector(0, 0, -1.2*m), logicTungsten, "Tungsten",
                      logicWorld, false, 0, true);
 
     // ========== PARTICLE GUN VISUALIZATION ==========
@@ -162,9 +184,53 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4ThreeVector gunPos = G4ThreeVector(0, 0.*m, -2.0*m);
     new G4PVPlacement(gunRot, gunPos, gunLog, "GunBlock", logicWorld, false, 0, true);
 
-    //===========Tungsten Bore===========
+    // ============ Tungsten transport bore ===========
+    G4double startPos = -1.1*m;
+    G4double endPos = 17.58*m;
+    G4double R_start = 7.5*cm;
+    G4double R_end = 30*cm;
+    G4double length = 0.01*m;
+    G4double bore_length = endPos - startPos;
+    G4double boreCenter = (startPos + endPos) / 2;
+    G4double k = std::log(R_end/R_start);
+    int bore_number = 0;
+    
+    for(G4double z = startPos+length/2; z <= endPos; z +=length) {
+        G4double s = z-startPos;
+        G4double R_inner = R_start*std::exp(k*std::pow(s/bore_length, 0.25));
+        G4ThreeVector fBore_position = G4ThreeVector(0, 0, z);
+        // Lining 1 - steel
+        G4Tubs* Steelbore = new G4Tubs("Bore"+std::to_string(bore_number), R_inner, 40*cm, length, 0*deg, 360*deg);
+        G4LogicalVolume* logicBore_Steel = new G4LogicalVolume(Steelbore, matSteel, "Bore"+std::to_string(bore_number));
+        G4VisAttributes* steelBore = new G4VisAttributes(G4Colour::Yellow()); //Grey
+        steelBore->SetVisibility(true);
+        logicBore_Steel->SetVisAttributes(steelBore);
+        // lining 2 - tungsten
+        G4Tubs* Tungstenbore = new G4Tubs("Bore"+std::to_string(bore_number), 40*cm, 70*cm, length, 0*deg, 360*deg);
+        G4LogicalVolume* logicBore_W = new G4LogicalVolume(Tungstenbore, tungsten_mat, "Bore"+std::to_string(bore_number));
+        new G4PVPlacement(nullptr, fBore_position, logicBore_W, "Bore"+std::to_string(bore_number), logicWorld, false, 0, false);
+        G4VisAttributes* tungstenBore = new G4VisAttributes(G4Color(0.5,0.5,0.5,1.0)); //Grey
+        tungstenBore->SetVisibility(true);
+        logicBore_W->SetVisAttributes(tungstenBore);
+        bore_number++;
+    }
+    
+    /* 
+    G4Cons* bore = new G4Cons("Bore", 
+                            7.5*cm, // start inner radius
+                            70*cm, // start outer radius
+                            30*cm, // end inner radius
+                            70*cm, // end outer radius
+                            bore_length/2, // bore centre
+                            0.0*deg,
+                            360.0*deg);
+    G4LogicalVolume* logicBore = new G4LogicalVolume(bore, tungsten_mat, "Bore");
+    fBore = logicBore;
+    G4ThreeVector fBore_position = G4ThreeVector(0, 0, boreCenter);
+    new G4PVPlacement(nullptr, fBore_position, logicBore, "Bore", logicWorld, false, 0, false);
+    
     G4double bore_1_position = 1.5*meter;
-    G4Tubs* bore_1 = new G4Tubs("Bore_1", 7.5*cm, 70*cm, 3.0*m, 0*deg, 360*deg);
+    G4Tubs* bore_1 = new G4Tubs("Bore_1", 10*cm, 70*cm, 3.0*m, 0*deg, 360*deg);
     G4LogicalVolume* logicBore_1 = new G4LogicalVolume(bore_1, tungsten_mat, "Bore_1");
     fBore_1 = logicBore_1;
     G4ThreeVector fBore1_position = G4ThreeVector(0, 0, bore_1_position);
@@ -183,8 +249,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     fBore_3 = logicBore_3;
     G4ThreeVector fBore3_position = G4ThreeVector(0, 0, bore_3_position);
     new G4PVPlacement(nullptr, fBore3_position, logicBore_3, "Bore_3", logicWorld, false, 0, false);
+    */
 
-
+    //============ Solenoid Channel ===================
     G4cout << "Creating Solenoid 1..." << G4endl;
     fSolenoidSystem1->CreateRampUpSolenoids(
         0.970*m,    // Rc
@@ -196,7 +263,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     G4cout << "Creating Solenoid 2..." << G4endl;
     fSolenoidSystem2->CreateRampUpSolenoids(
         0.970*m,
@@ -208,7 +275,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     G4cout << "Creating Solenoid 3..." << G4endl;
     fSolenoidSystem3->CreateRampUpSolenoids(
         0.970*m,
@@ -220,19 +287,19 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     G4cout << "Creating Solenoid 4..." << G4endl;
     fSolenoidSystem4->CreateRampUpSolenoids(
         0.887*m,
         1.665*m,    // Zc (shifted +0.3m)
         0.374*m,
         0.830*m,
-        10,
+        8,
         20,
         52*ampere,
         fWorldLogical
     );
-    
+
     G4cout << "Creating Solenoid 5..." << G4endl;
     fSolenoidSystem5->CreateRampUpSolenoids(
         0.825*m,
@@ -244,7 +311,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     G4cout << "Creating Solenoid 6..." << G4endl;
     fSolenoidSystem6->CreateRampUpSolenoids(
         0.783*m,
@@ -256,31 +323,31 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 7
     fSolenoidSystem7->CreateRampUpSolenoids(
         0.825*m,
         4.008*m,    // Zc (shifted +0.3m)
         0.249*m,
         0.415*m,
-        5,           // NR
+        4,           // NR
         10,          // NZ
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 8
     fSolenoidSystem8->CreateRampUpSolenoids(
         0.804*m,
         4.903*m,    // Zc (shifted +0.3m from 4.603)
         0.208*m,
         0.415*m,
-        5,           // NR
+        4,           // NR
         10,          // NZ
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 9
     fSolenoidSystem9->CreateRampUpSolenoids(
         0.742*m,
@@ -292,31 +359,31 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 10
     fSolenoidSystem10->CreateRampUpSolenoids(
         0.742*m,
         6.395*m,    // Zc (shifted +0.3m)
         0.083*m,
         0.830*m,
-        3,
-        20,
+        2,           // NR
+        20,          // NZ
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 11
     fSolenoidSystem11->CreateRampUpSolenoids(
         0.742*m,
         7.245*m,    // Zc (shifted +0.3m)
         0.083*m,
         0.830*m,
-        3,
+        2,
         20,
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 12
     fSolenoidSystem12->CreateRampUpSolenoids(
         0.721*m,
@@ -328,7 +395,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 13
     fSolenoidSystem13->CreateRampUpSolenoids(
         0.721*m,
@@ -340,7 +407,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 14
     fSolenoidSystem14->CreateRampUpSolenoids(
         0.721*m,
@@ -352,7 +419,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 15
     fSolenoidSystem15->CreateRampUpSolenoids(
         0.742*m,
@@ -364,7 +431,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 16
     fSolenoidSystem16->CreateRampUpSolenoids(
         0.721*m,
@@ -376,7 +443,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 17
     fSolenoidSystem17->CreateRampUpSolenoids(
         0.721*m,
@@ -388,7 +455,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 18
     fSolenoidSystem18->CreateRampUpSolenoids(
         0.721*m,
@@ -400,7 +467,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 19
     fSolenoidSystem19->CreateRampUpSolenoids(
         0.721*m,
@@ -412,7 +479,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 20
     fSolenoidSystem20->CreateRampUpSolenoids(
         0.721*m,
@@ -424,7 +491,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 21
     fSolenoidSystem21->CreateRampUpSolenoids(
         0.721*m,
@@ -436,7 +503,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 22
     fSolenoidSystem22->CreateRampUpSolenoids(
         0.721*m,
@@ -448,7 +515,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-    
+
     // Solenoid 23
     fSolenoidSystem23->CreateRampUpSolenoids(
         0.721*m,
@@ -477,7 +544,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     fMomentumChicane->BuildChicane(fWorldLogical);
     */
 
-    // ========= Tungsten Aperture ====
+    //========= Tungsten Aperture ====
     //G4double tungstenAperture_position = 80*meter;
     //G4Tubs* tungstenAperture = new G4Tubs("TungstenAperture", 5*cm, 120*cm, 2*cm, 0*deg, 360*deg);
     //G4LogicalVolume* logicTungstenAperture = new G4LogicalVolume(tungstenAperture, tungsten_mat, "TungstenAperture");
@@ -490,7 +557,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4double detector_thickness = 0.1*cm;
 
     // Detector 1: Before momentum chicane
-    G4double detector1_position = 4.5*meter;
+    G4double detector1_position = 4.51*meter;
     G4Tubs* solidDetector1 = new G4Tubs("Detector1", 0*cm, 70*cm, 0.5*detector_thickness, 0*deg, 360*deg);
     G4LogicalVolume* logicDetector1 = new G4LogicalVolume(solidDetector1, scintillator_mat, "Detector1");
     fDetector1Volume = logicDetector1;
@@ -498,7 +565,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     new G4PVPlacement(nullptr, fDetector1Position, logicDetector1, "Detector1", logicWorld, false, 0, false);
 
     // Detector 2: After momentum chicane, before solenoid
-    G4double detector2_position = 11.0*meter;
+    G4double detector2_position = 10.975*meter;
     G4Tubs* solidDetector2 = new G4Tubs("Detector2", 0*cm, 70*cm, 0.5*detector_thickness, 0*deg, 360*deg);
     G4LogicalVolume* logicDetector2 = new G4LogicalVolume(solidDetector2, scintillator_mat, "Detector2");
     fDetector2Volume = logicDetector2;
@@ -528,7 +595,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     // ========== RF CAVITY  ==========
     G4double rfcavity_radius = 30*cm;
     G4double rfcavity_length = 20*cm;
-    G4double rfcavity_position = 2000*cm;  // Positioned after detectors
+    G4double rfcavity_position = -5*m;  // Positioned after detectors
 
     G4Tubs* solidRFCavity = new G4Tubs("RFCavity", 0*cm, rfcavity_radius, 0.5*rfcavity_length, 0*deg, 360*deg);
     G4LogicalVolume* logicRFCavity = new G4LogicalVolume(solidRFCavity, rfcavity_mat, "RFCavity");
@@ -536,13 +603,25 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     new G4PVPlacement(nullptr, G4ThreeVector(0, 0, rfcavity_position), logicRFCavity,
                      "RFCavity", logicWorld, false, 0, false);
 
-    // ========== VISUALIZATION (keep original + new) ==========
+    // ========== VISUALIZATION ==========
     G4VisAttributes* tungsten_vis_att = new G4VisAttributes(G4Colour(0.5, 0.5, 0.5));
     logicTungsten->SetVisAttributes(tungsten_vis_att);
-
-    //G4VisAttributes* tungstenAperture_vis_att = new G4VisAttributes(G4Color::Yellow());
-    //tungstenAperture_vis_att->SetVisibility(true);
-    //logicTungstenAperture->SetVisAttributes(tungstenAperture_vis_att);
+    
+    
+    /*
+    G4VisAttributes* tungstenBore = new G4VisAttributes(G4Color(0.5,0.5,0.5,1.0)); //Grey
+    tungstenBore->SetVisibility(true);
+    logicBore->SetVisAttributes(tungstenBore);
+    */
+    /* 
+    G4VisAttributes* tungstenBore_2 = new G4VisAttributes(G4Color(0.5,0.5,0.5,1.0)); //Grey
+    tungstenBore_2->SetVisibility(true);
+    logicBore_2->SetVisAttributes(tungstenBore_2);
+    
+    G4VisAttributes* tungstenBore_3 = new G4VisAttributes(G4Color(0.5,0.5,0.5,1.0)); //Grey
+    tungstenBore_3->SetVisibility(true);
+    logicBore_3->SetVisAttributes(tungstenBore_3);
+    */
 
     G4VisAttributes* detector1_vis_att = new G4VisAttributes(G4Colour(1.0, 0.0, 0.0));
     detector1_vis_att->SetVisibility(true);

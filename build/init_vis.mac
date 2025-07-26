@@ -1,5 +1,0 @@
-# Initialize kernel
-/run/initialize
-
-# Visualization settings
-/control/execute vis.mac
