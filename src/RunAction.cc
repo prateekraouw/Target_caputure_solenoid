@@ -54,9 +54,15 @@ void RunAction::BeginOfRunAction(const G4Run* run)
     G4cerr << "ERROR: Could not open output file " << fileName << G4endl;
   }
   
-  // If 6D vector file was closed, reopen it for this run
-  if (!file6DVector.is_open()) {
+  // Open global 6D vector file only once per run (thread 0)
+  G4int threadID = G4Threading::G4GetThreadId();
+  if (threadID == 0) {
+    // Close any existing file first
+    if (file6DVector.is_open()) {
+      file6DVector.close();
+    }
     Open6DVectorFile();
+    G4cout << "Thread 0 opened global 6D vector file for run " << run->GetRunID() << G4endl;
   }
 }
 
@@ -109,6 +115,25 @@ void RunAction::Record6DVector(G4int detectorID, const G4String& particleName, c
 {
   // Thread-local storage automatically handles per-thread data
   f6DVectorData.emplace_back(detectorID, particleName, position, momentum, totalEnergy);
+  
+  // Debug output
+  G4cout << "6D Vector recorded: Detector " << detectorID 
+         << ", Particle " << particleName 
+         << ", Energy " << totalEnergy/MeV << " MeV" << G4endl;
+  
+  // Also write to global 6D vector file immediately with thread safety
+  if (file6DVector.is_open()) {
+    std::lock_guard<std::mutex> lock(fDataMutex); // Thread safety
+    file6DVector << detectorID << ","
+                 << particleName << ","
+                 << position.x()/cm << "," << momentum.x()/MeV << ","
+                 << position.y()/cm << "," << momentum.y()/MeV << ","
+                 << position.z()/cm << "," << momentum.z()/MeV << ","
+                 << totalEnergy/MeV << std::endl;
+    file6DVector.flush(); // Ensure data is written immediately
+  } else {
+    G4cout << "WARNING: Global 6D vector file is not open!" << G4endl;
+  }
 }
 
 // Function to open 6D vector file
@@ -143,6 +168,28 @@ void RunAction::SaveMagneticFieldAlongZ()
 {
     // Implementation for magnetic field data saving
     // This can be implemented as needed
+}
+
+// Custom exception handler to suppress specific warnings
+void RunAction::SuppressWarnings()
+{
+    // Suppress geometry navigation warnings
+    G4Exception::SetSeverity("GeomNav1002", G4ExceptionSeverity::JustWarning);
+    G4Exception::SetSeverity("GeomNav1001", G4ExceptionSeverity::JustWarning);
+    
+    // Suppress field integration warnings
+    G4Exception::SetSeverity("GeomField1001", G4ExceptionSeverity::JustWarning);
+    G4Exception::SetSeverity("GeomField1002", G4ExceptionSeverity::JustWarning);
+    
+    // Suppress transportation warnings
+    G4Exception::SetSeverity("Transportation1001", G4ExceptionSeverity::JustWarning);
+    G4Exception::SetSeverity("Transportation1002", G4ExceptionSeverity::JustWarning);
+    
+    // Suppress physics process warnings
+    G4Exception::SetSeverity("Physics1001", G4ExceptionSeverity::JustWarning);
+    G4Exception::SetSeverity("Physics1002", G4ExceptionSeverity::JustWarning);
+    
+    G4cout << "Warning suppression enabled for geometry and field integration" << G4endl;
 }
 
 /*int main(int argc, char** argv) {

@@ -1,0 +1,35 @@
+# Suppress specific Geant4 warnings
+# This macro suppresses common warnings that don't affect physics
+
+# Suppress geometry navigation warnings
+/control/exception GeomNav1002 JustWarning
+/control/exception GeomNav1001 JustWarning
+
+# Suppress field integration warnings  
+/control/exception GeomField1001 JustWarning
+/control/exception GeomField1002 JustWarning
+
+# Suppress transportation warnings
+/control/exception Transportation1001 JustWarning
+/control/exception Transportation1002 JustWarning
+
+# Suppress physics process warnings
+/control/exception Physics1001 JustWarning
+/control/exception Physics1002 JustWarning
+
+# Suppress particle definition warnings
+/control/exception ParticleDefinition1001 JustWarning
+
+# Suppress material warnings
+/control/exception Material1001 JustWarning
+
+# Suppress volume warnings
+/control/exception Volume1001 JustWarning
+
+# Suppress field manager warnings
+/control/exception FieldManager1001 JustWarning
+
+# Set overall exception severity to JustWarning
+/control/exception * JustWarning
+
+G4cout << "Warning suppression enabled" << G4endl; 

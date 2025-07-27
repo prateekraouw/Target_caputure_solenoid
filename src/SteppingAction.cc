@@ -105,6 +105,13 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     G4cout << "Detector 2 position: " << detectorConstruction->GetDetector2Position()/cm << " cm" << G4endl;
     G4cout << "Detector 3 position: " << detectorConstruction->GetDetector3Position()/cm << " cm" << G4endl;
     G4cout << "Detector 4 position: " << detectorConstruction->GetDetector4Position()/cm << " cm" << G4endl;
+    
+    // Debug: Check if detector volumes are properly set
+    G4cout << "Detector volumes initialized:" << G4endl;
+    G4cout << "  Detector1: " << (fDetector1Volume ? "OK" : "NULL") << G4endl;
+    G4cout << "  Detector2: " << (fDetector2Volume ? "OK" : "NULL") << G4endl;
+    G4cout << "  Detector3: " << (fDetector3Volume ? "OK" : "NULL") << G4endl;
+    G4cout << "  Detector4: " << (fDetector4Volume ? "OK" : "NULL") << G4endl;
   }
 
   // Get the RunAction - using const_cast to handle the constness issue
@@ -116,6 +123,17 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   G4ParticleDefinition* particle = track->GetDefinition();
   G4String particleName = particle->GetParticleName();
   G4double energy = track->GetKineticEnergy();
+
+  // Debug: Track interesting particles
+  if (particleName == "mu+" || particleName == "mu-" || particleName == "pi+" || particleName == "pi-") {
+    static G4int debugCounter = 0;
+    debugCounter++;
+    if (debugCounter % 100 == 0) { // Print every 100th interesting particle
+      G4cout << "Tracking particle: " << particleName 
+             << " (Energy: " << energy/MeV << " MeV)" 
+             << " at step " << debugCounter << G4endl;
+    }
+  }
 
 
   // Check for pion decay specifically
@@ -160,6 +178,11 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
 
   // Check for muons and charged pions in detector 1
   if (step->IsFirstStepInVolume() && volume == fDetector1Volume) {
+    G4cout << "\n=== PARTICLE ENTERING DETECTOR 1 ===" << G4endl;
+    G4cout << "Particle: " << particleName << G4endl;
+    G4cout << "Energy: " << energy/MeV << " MeV" << G4endl;
+    G4cout << "Position: " << step->GetPreStepPoint()->GetPosition()/cm << " cm" << G4endl;
+    
     // Get position and momentum for 6D vector
     G4ThreeVector position = step->GetPreStepPoint()->GetPosition();
     G4ThreeVector momentum = step->GetPreStepPoint()->GetMomentum();
@@ -200,6 +223,11 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
 
   // Check for muons and charged pions in detector 2
   if (step->IsFirstStepInVolume() && volume == fDetector2Volume) {
+    G4cout << "\n=== PARTICLE ENTERING DETECTOR 2 ===" << G4endl;
+    G4cout << "Particle: " << particleName << G4endl;
+    G4cout << "Energy: " << energy/MeV << " MeV" << G4endl;
+    G4cout << "Position: " << step->GetPreStepPoint()->GetPosition()/cm << " cm" << G4endl;
+    
     // Get position and momentum for 6D vector
     G4ThreeVector position = step->GetPreStepPoint()->GetPosition();
     G4ThreeVector momentum = step->GetPreStepPoint()->GetMomentum();

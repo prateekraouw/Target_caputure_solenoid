@@ -10,6 +10,7 @@
 #include <tuple>
 #include <mutex>
 #include <thread>
+#include "G4Exception.hh"
 
 class G4Run;
 class RunAction : public G4UserRunAction
@@ -42,6 +43,9 @@ class RunAction : public G4UserRunAction
     void Close6DVectorFile();
 
     void SaveMagneticFieldAlongZ();
+    
+    // Custom exception handler to suppress warnings
+    static void SuppressWarnings();
                     
   private:
     std::map<G4String, int> fSecondaryParticles;
