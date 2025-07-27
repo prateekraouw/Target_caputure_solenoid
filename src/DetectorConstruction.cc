@@ -129,26 +129,15 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4Material* scintillator_mat = nist->FindOrBuildMaterial("G4_Ar");
     G4Material* rfcavity_mat = nist->FindOrBuildMaterial("G4_Galactic");
     
-    G4double A;  // atomic mass
-    G4double Z;  // atomic number
-    A  =  54.94*g/mole;
-    G4Element* elMn   =  new G4Element("Manganese","Mn",Z = 25.,A); 
-    A = 28.09*g/mole;
-    G4Element* elSi  = new G4Element("Silicon","Si",Z = 14.,A);
-    A = 52.00*g/mole;
-    G4Element* elCr  = new G4Element("Chromium","Cr",Z = 24.,A); 
-    A = 58.70*g/mole;
-    G4Element* elNi  = new G4Element("Nickel","Ni",Z = 28.,A);
-    A = 55.85*g/mole;
-    G4Element* elFe  = new G4Element("Iron","Fe",Z = 26.,A);  
-    
-    G4double density = 8.02*g/cm3;
-    G4Material* matSteel = new G4Material("StainlessSteel", density, 5); // 5 elements
-    matSteel->AddElement(elFe, 0.68); // Example: 68% Iron
-    matSteel->AddElement(elCr, 0.19); // Example: 19% Chromium
-    matSteel->AddElement(elNi, 0.10); // Example: 10% Nickel
-    matSteel->AddElement(elMn, 0.02); // Example: 2% Manganese
-    matSteel->AddElement(elSi, 0.01); // Example: 1% Silicon
+    G4Element* elCo = new G4Element("Cobalt", "Co", 27., 58.933*g/mole);
+    G4Element* elC = new G4Element("Carbon", "C", 6., 12.01*g/mole);
+    G4Element* elW = new G4Element("Tungsten","W",74.,183.85*g/mole);
+    G4double density = 15.0*g/cm3;
+    G4Material* tungstenCarbide = new G4Material("tungstenCarbide", density, 3); // 5 elements
+    tungstenCarbide->AddElement(elW, 0.882); // Example: 68% Iron
+    tungstenCarbide->AddElement(elC, 0.058); // Example: 19% Chromium
+    tungstenCarbide->AddElement(elCo, 0.06); // Example: 10% Nickel
+
 
     // ========== WORLD VOLUME ==========
     G4double world_size = 10000*cm;
@@ -199,19 +188,13 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         G4double s = z-startPos;
         G4double R_inner = R_start*std::exp(k*std::pow(s/bore_length, 0.25));
         G4ThreeVector fBore_position = G4ThreeVector(0, 0, z);
-        // Lining 1 - steel
-        G4Tubs* Steelbore = new G4Tubs("Bore"+std::to_string(bore_number), R_inner, 40*cm, length, 0*deg, 360*deg);
-        G4LogicalVolume* logicBore_Steel = new G4LogicalVolume(Steelbore, matSteel, "Bore"+std::to_string(bore_number));
-        G4VisAttributes* steelBore = new G4VisAttributes(G4Colour::Yellow()); //Grey
-        steelBore->SetVisibility(true);
-        logicBore_Steel->SetVisAttributes(steelBore);
-        // lining 2 - tungsten
-        G4Tubs* Tungstenbore = new G4Tubs("Bore"+std::to_string(bore_number), 40*cm, 70*cm, length, 0*deg, 360*deg);
-        G4LogicalVolume* logicBore_W = new G4LogicalVolume(Tungstenbore, tungsten_mat, "Bore"+std::to_string(bore_number));
-        new G4PVPlacement(nullptr, fBore_position, logicBore_W, "Bore"+std::to_string(bore_number), logicWorld, false, 0, false);
-        G4VisAttributes* tungstenBore = new G4VisAttributes(G4Color(0.5,0.5,0.5,1.0)); //Grey
-        tungstenBore->SetVisibility(true);
-        logicBore_W->SetVisAttributes(tungstenBore);
+        // Tungsten carbide lining 
+        G4Tubs* bore = new G4Tubs("Bore"+std::to_string(bore_number), R_inner, 70*cm, length, 0*deg, 360*deg);
+        G4LogicalVolume* logicBore = new G4LogicalVolume(bore, tungstenCarbide, "Bore"+std::to_string(bore_number));
+        G4VisAttributes* Bore = new G4VisAttributes(G4Color(0.5,0.5,0.5,1.0)); //Grey
+        new G4PVPlacement(nullptr, fBore_position, logicBore, "Bore", logicWorld, false, 0, false);
+        Bore->SetVisibility(true);
+        logicBore->SetVisAttributes(Bore);
         bore_number++;
     }
     
