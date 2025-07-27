@@ -33,15 +33,16 @@
 #include "PhysicsList.hh"
 #include "ActionInitialization.hh"
 #include "ChicaneConstruction.hh"
+#include "RunAction.hh"
 
 int main(int argc, char** argv)
 {
   // Suppress specific Geant4 warnings
-  G4Exception::SetSeverity(G4ExceptionSeverity::JustWarning);
+  G4ExceptionSeverity::SetSeverity(G4ExceptionSeverity::JustWarning);
   
   // Suppress specific warning categories
-  G4Exception::SetSeverity("GeomNav1002", G4ExceptionSeverity::JustWarning);
-  G4Exception::SetSeverity("GeomField1001", G4ExceptionSeverity::JustWarning);
+  G4ExceptionSeverity::SetSeverity("GeomNav1002", G4ExceptionSeverity::JustWarning);
+  G4ExceptionSeverity::SetSeverity("GeomField1001", G4ExceptionSeverity::JustWarning);
   
   // Call custom warning suppression
   RunAction::SuppressWarnings();
@@ -77,7 +78,7 @@ int main(int argc, char** argv)
     // Interactive mode: define UI session
     G4UIExecutive* ui = new G4UIExecutive(argc, argv);
     G4VisManager* visManager = new G4VisExecutive();
-    G4VVisManager::SetConcreteInstance(visManager);
+    visManager->Initialize();
     UImanager->ApplyCommand("/control/execute init_vis.mac");
     ui->SessionStart();
     delete ui;

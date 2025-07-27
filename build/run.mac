@@ -1,0 +1,14 @@
+# Suppress warnings
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+
+# Suppress specific Geant4 warnings
+/control/execute suppress_warnings.mac
+
+# Initialize kernel
+/run/initialize
+
+# Set number of events
+/run/beamOn 1000

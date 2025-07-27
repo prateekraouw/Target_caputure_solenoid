@@ -174,20 +174,20 @@ void RunAction::SaveMagneticFieldAlongZ()
 void RunAction::SuppressWarnings()
 {
     // Suppress geometry navigation warnings
-    G4Exception::SetSeverity("GeomNav1002", G4ExceptionSeverity::JustWarning);
-    G4Exception::SetSeverity("GeomNav1001", G4ExceptionSeverity::JustWarning);
+    G4ExceptionSeverity::SetSeverity("GeomNav1002", G4ExceptionSeverity::JustWarning);
+    G4ExceptionSeverity::SetSeverity("GeomNav1001", G4ExceptionSeverity::JustWarning);
     
     // Suppress field integration warnings
-    G4Exception::SetSeverity("GeomField1001", G4ExceptionSeverity::JustWarning);
-    G4Exception::SetSeverity("GeomField1002", G4ExceptionSeverity::JustWarning);
+    G4ExceptionSeverity::SetSeverity("GeomField1001", G4ExceptionSeverity::JustWarning);
+    G4ExceptionSeverity::SetSeverity("GeomField1002", G4ExceptionSeverity::JustWarning);
     
     // Suppress transportation warnings
-    G4Exception::SetSeverity("Transportation1001", G4ExceptionSeverity::JustWarning);
-    G4Exception::SetSeverity("Transportation1002", G4ExceptionSeverity::JustWarning);
+    G4ExceptionSeverity::SetSeverity("Transportation1001", G4ExceptionSeverity::JustWarning);
+    G4ExceptionSeverity::SetSeverity("Transportation1002", G4ExceptionSeverity::JustWarning);
     
     // Suppress physics process warnings
-    G4Exception::SetSeverity("Physics1001", G4ExceptionSeverity::JustWarning);
-    G4Exception::SetSeverity("Physics1002", G4ExceptionSeverity::JustWarning);
+    G4ExceptionSeverity::SetSeverity("Physics1001", G4ExceptionSeverity::JustWarning);
+    G4ExceptionSeverity::SetSeverity("Physics1002", G4ExceptionSeverity::JustWarning);
     
     G4cout << "Warning suppression enabled for geometry and field integration" << G4endl;
 }
