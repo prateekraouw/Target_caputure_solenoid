@@ -26,8 +26,6 @@
 #include "G4ParticleTypes.hh"
 #include "G4ParticleTable.hh"
 #include "G4UnitsTable.hh"
-#include "G4Exception.hh"
-#include "G4ExceptionSeverity.hh"
 
 #include "DetectorConstruction.hh"
 #include "PhysicsList.hh"
@@ -59,13 +57,7 @@ int main(int argc, char** argv)
   // Get the pointer to the User Interface manager
   G4UImanager* UImanager = G4UImanager::GetUIpointer();
   
-  // Suppress specific Geant4 warnings using UI commands
-  UImanager->ApplyCommand("/control/exception * JustWarning");
-  UImanager->ApplyCommand("/control/exception GeomNav1002 JustWarning");
-  UImanager->ApplyCommand("/control/exception GeomField1001 JustWarning");
-  
-  // Call custom warning suppression
-  RunAction::SuppressWarnings();
+  // No warning suppression logic
   
   if (argc != 1) {
     // Batch mode

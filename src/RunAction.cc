@@ -173,26 +173,7 @@ void RunAction::SaveMagneticFieldAlongZ()
 // Custom exception handler to suppress specific warnings
 void RunAction::SuppressWarnings()
 {
-    // Get the UI manager to execute commands
-    G4UImanager* UImanager = G4UImanager::GetUIpointer();
-    
-    // Suppress geometry navigation warnings
-    UImanager->ApplyCommand("/control/exception GeomNav1002 JustWarning");
-    UImanager->ApplyCommand("/control/exception GeomNav1001 JustWarning");
-    
-    // Suppress field integration warnings
-    UImanager->ApplyCommand("/control/exception GeomField1001 JustWarning");
-    UImanager->ApplyCommand("/control/exception GeomField1002 JustWarning");
-    
-    // Suppress transportation warnings
-    UImanager->ApplyCommand("/control/exception Transportation1001 JustWarning");
-    UImanager->ApplyCommand("/control/exception Transportation1002 JustWarning");
-    
-    // Suppress physics process warnings
-    UImanager->ApplyCommand("/control/exception Physics1001 JustWarning");
-    UImanager->ApplyCommand("/control/exception Physics1002 JustWarning");
-    
-    G4cout << "Warning suppression enabled for geometry and field integration" << G4endl;
+    // No-op: warning suppression removed as per user request
 }
 
 /*int main(int argc, char** argv) {
