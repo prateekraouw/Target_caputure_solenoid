@@ -173,7 +173,7 @@ void RunAction::SaveMagneticFieldAlongZ()
 // Custom exception handler to suppress specific warnings
 void RunAction::SuppressWarnings()
 {
-    // No-op: warning suppression removed as per user request
+    // No-op: function intentionally left blank
 }
 
 /*int main(int argc, char** argv) {
