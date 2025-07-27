@@ -428,7 +428,7 @@ void SolenoidSystem::CreateFieldManagers()
     // Configure field manager with tighter tolerances for fringe fields
     fieldManager->SetChordFinder(chordFinder);
     fieldManager->SetDetectorField(magField);
-    fieldManager->SetDeltaOneStep(0.001*mm);
+            fieldManager->SetDeltaOneStep(0.01*mm);  // Increased to reduce zero-step warnings
     fieldManager->SetDeltaIntersection(0.001*mm);
 
     // Apply field manager to field volume

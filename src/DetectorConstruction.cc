@@ -725,7 +725,7 @@ void DetectorConstruction::CreateInitialSolenoid(G4double start, G4double len)
 
     fInitialSolenoidFieldManager->SetChordFinder(chordFinder);
     fInitialSolenoidFieldManager->SetDetectorField(fInitialSolenoidField);
-    fInitialSolenoidFieldManager->SetDeltaOneStep(0.001*mm);
+    fInitialSolenoidFieldManager->SetDeltaOneStep(0.01*mm);  // Increased to reduce zero-step warnings
     fInitialSolenoidFieldManager->SetDeltaIntersection(0.001*mm);
 
     vacuumLogical->SetFieldManager(fInitialSolenoidFieldManager, true);
@@ -832,7 +832,7 @@ void DetectorConstruction::CreateTaperedSolenoid(G4double start, G4double len)
 
     fInitialSolenoidFieldManager->SetChordFinder(chordFinder);
     fInitialSolenoidFieldManager->SetDetectorField(fInitialSolenoidField);
-    fInitialSolenoidFieldManager->SetDeltaOneStep(0.0001*mm);
+    fInitialSolenoidFieldManager->SetDeltaOneStep(0.01*mm);  // Increased to reduce zero-step warnings
     fInitialSolenoidFieldManager->SetDeltaIntersection(0.0001*mm);
 
     vacuumLogical->SetFieldManager(fInitialSolenoidFieldManager, true);

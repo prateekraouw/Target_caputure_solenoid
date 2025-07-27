@@ -134,7 +134,7 @@ void MomentumChicane::SetupMagneticFields()
         
         fieldManager->SetChordFinder(chordFinder);
         fieldManager->SetDetectorField(magField);
-        fieldManager->SetDeltaOneStep(0.001*mm);
+        fieldManager->SetDeltaOneStep(0.01*mm);  // Increased to reduce zero-step warnings
         fieldManager->SetDeltaIntersection(0.001*mm);
         
         fMagnetVolumes[i]->SetFieldManager(fieldManager, true);

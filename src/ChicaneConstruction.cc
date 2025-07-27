@@ -314,16 +314,18 @@ void ChicaneConstruction::SetupMagnet1Field()
   // Create stepper
   G4ClassicalRK4* stepper1 = new G4ClassicalRK4(equation1);
   
-  // Create chord finder
-  G4double minStep = 0.001*mm;  // Smaller step for high field accuracy
+  // Create chord finder with improved parameters
+  G4double minStep = 0.1*mm;  // Increased from 0.001mm to reduce zero-step issues
+  G4double maxStep = 10.0*mm; // Add maximum step size
   G4MagInt_Driver* driver1 = new G4MagInt_Driver(minStep, stepper1, stepper1->GetNumberOfVariables());
+  driver1->SetMaxStep(maxStep); // Set maximum step size
   G4ChordFinder* chordFinder1 = new G4ChordFinder(driver1);
   
-  // Set field manager parameters - higher precision for 5T field
+  // Set field manager parameters with more robust settings
   fFieldManager1->SetChordFinder(chordFinder1);
   fFieldManager1->SetDetectorField(fMagField1);
-  fFieldManager1->SetDeltaOneStep(0.001*mm);
-  fFieldManager1->SetDeltaIntersection(0.001*mm);
+  fFieldManager1->SetDeltaOneStep(0.01*mm);  // Increased from 0.001mm
+  fFieldManager1->SetDeltaIntersection(0.01*mm); // Increased from 0.001mm
   
   // Apply field manager to magnet 1
   fMagnet1Volume->SetFieldManager(fFieldManager1, true);
@@ -346,16 +348,18 @@ void ChicaneConstruction::SetupMagnet2Field()
   // Create stepper
   G4ClassicalRK4* stepper2 = new G4ClassicalRK4(equation2);
   
-  // Create chord finder
-  G4double minStep = 0.001*mm;  // Smaller step for high field accuracy
+  // Create chord finder with improved parameters
+  G4double minStep = 0.1*mm;  // Increased from 0.001mm to reduce zero-step issues
+  G4double maxStep = 10.0*mm; // Add maximum step size
   G4MagInt_Driver* driver2 = new G4MagInt_Driver(minStep, stepper2, stepper2->GetNumberOfVariables());
+  driver2->SetMaxStep(maxStep); // Set maximum step size
   G4ChordFinder* chordFinder2 = new G4ChordFinder(driver2);
   
-  // Set field manager parameters - higher precision for 5T field
+  // Set field manager parameters with more robust settings
   fFieldManager2->SetChordFinder(chordFinder2);
   fFieldManager2->SetDetectorField(fMagField2);
-  fFieldManager2->SetDeltaOneStep(0.001*mm);
-  fFieldManager2->SetDeltaIntersection(0.001*mm);
+  fFieldManager2->SetDeltaOneStep(0.01*mm);  // Increased from 0.001mm
+  fFieldManager2->SetDeltaIntersection(0.01*mm); // Increased from 0.001mm
   
   // Apply field manager to magnet 2
   fMagnet2Volume->SetFieldManager(fFieldManager2, true);
@@ -378,16 +382,18 @@ void ChicaneConstruction::SetupMagnet3Field()
   // Create stepper
   G4ClassicalRK4* stepper3 = new G4ClassicalRK4(equation3);
   
-  // Create chord finder
-  G4double minStep = 0.001*mm;  // Smaller step for high field accuracy
+  // Create chord finder with improved parameters
+  G4double minStep = 0.1*mm;  // Increased from 0.001mm to reduce zero-step issues
+  G4double maxStep = 10.0*mm; // Add maximum step size
   G4MagInt_Driver* driver3 = new G4MagInt_Driver(minStep, stepper3, stepper3->GetNumberOfVariables());
+  driver3->SetMaxStep(maxStep); // Set maximum step size
   G4ChordFinder* chordFinder3 = new G4ChordFinder(driver3);
   
-  // Set field manager parameters - higher precision for 5T field
+  // Set field manager parameters with more robust settings
   fFieldManager3->SetChordFinder(chordFinder3);
   fFieldManager3->SetDetectorField(fMagField3);
-  fFieldManager3->SetDeltaOneStep(0.001*mm);
-  fFieldManager3->SetDeltaIntersection(0.001*mm);
+  fFieldManager3->SetDeltaOneStep(0.01*mm);  // Increased from 0.001mm
+  fFieldManager3->SetDeltaIntersection(0.01*mm); // Increased from 0.001mm
   
   // Apply field manager to magnet 3
   fMagnet3Volume->SetFieldManager(fFieldManager3, true);
@@ -410,16 +416,18 @@ void ChicaneConstruction::SetupMagnet4Field()
   // Create stepper
   G4ClassicalRK4* stepper4 = new G4ClassicalRK4(equation4);
   
-  // Create chord finder
-  G4double minStep = 0.001*mm;  // Smaller step for high field accuracy
+  // Create chord finder with improved parameters
+  G4double minStep = 0.1*mm;  // Increased from 0.001mm to reduce zero-step issues
+  G4double maxStep = 10.0*mm; // Add maximum step size
   G4MagInt_Driver* driver4 = new G4MagInt_Driver(minStep, stepper4, stepper4->GetNumberOfVariables());
+  driver4->SetMaxStep(maxStep); // Set maximum step size
   G4ChordFinder* chordFinder4 = new G4ChordFinder(driver4);
   
-  // Set field manager parameters - higher precision for 5T field
+  // Set field manager parameters with more robust settings
   fFieldManager4->SetChordFinder(chordFinder4);
   fFieldManager4->SetDetectorField(fMagField4);
-  fFieldManager4->SetDeltaOneStep(0.001*mm);
-  fFieldManager4->SetDeltaIntersection(0.001*mm);
+  fFieldManager4->SetDeltaOneStep(0.01*mm);  // Increased from 0.001mm
+  fFieldManager4->SetDeltaIntersection(0.01*mm); // Increased from 0.001mm
   
   // Apply field manager to magnet 4
   fMagnet4Volume->SetFieldManager(fFieldManager4, true);
