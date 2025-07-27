@@ -173,21 +173,24 @@ void RunAction::SaveMagneticFieldAlongZ()
 // Custom exception handler to suppress specific warnings
 void RunAction::SuppressWarnings()
 {
+    // Get the UI manager to execute commands
+    G4UImanager* UImanager = G4UImanager::GetUIpointer();
+    
     // Suppress geometry navigation warnings
-    G4ExceptionSeverity::SetSeverity("GeomNav1002", G4ExceptionSeverity::JustWarning);
-    G4ExceptionSeverity::SetSeverity("GeomNav1001", G4ExceptionSeverity::JustWarning);
+    UImanager->ApplyCommand("/control/exception GeomNav1002 JustWarning");
+    UImanager->ApplyCommand("/control/exception GeomNav1001 JustWarning");
     
     // Suppress field integration warnings
-    G4ExceptionSeverity::SetSeverity("GeomField1001", G4ExceptionSeverity::JustWarning);
-    G4ExceptionSeverity::SetSeverity("GeomField1002", G4ExceptionSeverity::JustWarning);
+    UImanager->ApplyCommand("/control/exception GeomField1001 JustWarning");
+    UImanager->ApplyCommand("/control/exception GeomField1002 JustWarning");
     
     // Suppress transportation warnings
-    G4ExceptionSeverity::SetSeverity("Transportation1001", G4ExceptionSeverity::JustWarning);
-    G4ExceptionSeverity::SetSeverity("Transportation1002", G4ExceptionSeverity::JustWarning);
+    UImanager->ApplyCommand("/control/exception Transportation1001 JustWarning");
+    UImanager->ApplyCommand("/control/exception Transportation1002 JustWarning");
     
     // Suppress physics process warnings
-    G4ExceptionSeverity::SetSeverity("Physics1001", G4ExceptionSeverity::JustWarning);
-    G4ExceptionSeverity::SetSeverity("Physics1002", G4ExceptionSeverity::JustWarning);
+    UImanager->ApplyCommand("/control/exception Physics1001 JustWarning");
+    UImanager->ApplyCommand("/control/exception Physics1002 JustWarning");
     
     G4cout << "Warning suppression enabled for geometry and field integration" << G4endl;
 }

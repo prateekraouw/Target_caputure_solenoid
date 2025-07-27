@@ -37,16 +37,6 @@
 
 int main(int argc, char** argv)
 {
-  // Suppress specific Geant4 warnings
-  G4ExceptionSeverity::SetSeverity(G4ExceptionSeverity::JustWarning);
-  
-  // Suppress specific warning categories
-  G4ExceptionSeverity::SetSeverity("GeomNav1002", G4ExceptionSeverity::JustWarning);
-  G4ExceptionSeverity::SetSeverity("GeomField1001", G4ExceptionSeverity::JustWarning);
-  
-  // Call custom warning suppression
-  RunAction::SuppressWarnings();
-  
   // Create the run manager
   G4MTRunManager* runManager = new G4MTRunManager;
   
@@ -68,6 +58,14 @@ int main(int argc, char** argv)
   
   // Get the pointer to the User Interface manager
   G4UImanager* UImanager = G4UImanager::GetUIpointer();
+  
+  // Suppress specific Geant4 warnings using UI commands
+  UImanager->ApplyCommand("/control/exception * JustWarning");
+  UImanager->ApplyCommand("/control/exception GeomNav1002 JustWarning");
+  UImanager->ApplyCommand("/control/exception GeomField1001 JustWarning");
+  
+  // Call custom warning suppression
+  RunAction::SuppressWarnings();
   
   if (argc != 1) {
     // Batch mode
