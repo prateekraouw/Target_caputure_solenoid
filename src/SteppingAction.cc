@@ -73,6 +73,13 @@ SteppingAction::~SteppingAction()
     G4cout << pair.first << ": " << pair.second << G4endl;
   }
   G4cout << "==========================================" << G4endl;
+  
+  // Close thread-local solenoid field file
+  static thread_local std::ofstream csvFile;
+  if (csvFile.is_open()) {
+    csvFile.close();
+    G4cout << "Thread " << G4Threading::G4GetThreadId() << " closed solenoid field file" << G4endl;
+  }
 }
 
 
@@ -454,15 +461,19 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
           }
           volumeCounters[volumeName]++;
 
-          // Create CSV header once
+          // Create CSV header once per thread
+          static thread_local bool csvCreated = false;
+          static thread_local std::ofstream csvFile;
+          
           if (!csvCreated) {
-              std::ofstream csvFile("all_23_solenoids.csv", std::ios::out);
+              std::ostringstream filename;
+              filename << "all_23_solenoids_thread" << G4Threading::G4GetThreadId() << ".csv";
+              csvFile.open(filename.str(), std::ios::out);
               if (csvFile.is_open()) {
                   csvFile << "x,y,z,bx,by,bz,particle,energy,volume\n";
-                  csvFile.close();
                   csvCreated = true;
-                  G4cout << "Created all_23_solenoids.csv for logging all "
-                         << allSolenoidVolumes.size() << " solenoids" << G4endl;
+                  G4cout << "Thread " << G4Threading::G4GetThreadId() 
+                         << " created solenoid field file: " << filename.str() << G4endl;
               }
           }
 
@@ -497,14 +508,13 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
                           G4double by = fieldValue[1] / tesla;
                           G4double bz = fieldValue[2] / tesla;
 
-                          // Write to CSV
-                          std::ofstream csvFile("all_23_solenoids.csv", std::ios::app);
+                          // Write to thread-specific CSV file
                           if (csvFile.is_open()) {
                               csvFile << std::fixed << std::setprecision(6)
                                      << x << "," << y << "," << z << ","
                                      << bx << "," << by << "," << bz << ","
                                      << particleName<<","<<energy << "," << volumeName << "\n";
-                              csvFile.close();
+                              csvFile.flush(); // Ensure data is written immediately
                               totalLoggedPoints++;
                           }
                       }

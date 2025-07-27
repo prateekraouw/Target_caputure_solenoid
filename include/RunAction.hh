@@ -9,6 +9,8 @@
 #include <vector>
 #include <tuple>
 #include <mutex>
+#include <thread>
+
 class G4Run;
 class RunAction : public G4UserRunAction
 {
@@ -49,9 +51,11 @@ class RunAction : public G4UserRunAction
     // File stream for 6D vector output
     std::ofstream file6DVector;
 
-    // Per-thread buffers for output
-    std::vector<std::pair<G4String, G4double>> fParticleData;
-    std::vector<std::tuple<G4int, G4String, G4ThreeVector, G4ThreeVector, G4double>> f6DVectorData;
+    // Thread-local storage for per-thread data collection
+    static thread_local std::vector<std::pair<G4String, G4double>> fParticleData;
+    static thread_local std::vector<std::tuple<G4int, G4String, G4ThreeVector, G4ThreeVector, G4double>> f6DVectorData;
+    
+    // Mutex for thread-safe operations
     std::mutex fDataMutex;
 
     };

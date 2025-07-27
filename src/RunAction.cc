@@ -12,6 +12,10 @@
 #include "G4Threading.hh"
 #include <sstream>
 
+// Define thread-local storage
+thread_local std::vector<std::pair<G4String, G4double>> RunAction::fParticleData;
+thread_local std::vector<std::tuple<G4int, G4String, G4ThreeVector, G4ThreeVector, G4double>> RunAction::f6DVectorData;
+
 RunAction::RunAction()
 : G4UserRunAction()
 {
@@ -34,6 +38,10 @@ void RunAction::BeginOfRunAction(const G4Run* run)
   fSecondaryParticles.clear();
   fParticleCounts.clear();
   
+  // Clear thread-local data at the beginning of each run
+  fParticleData.clear();
+  f6DVectorData.clear();
+  
   // Open Excel file for particle data
   G4String fileName = "particle_data" + std::to_string(run->GetRunID()) + ".csv";
   fOutputFile.open(fileName);
@@ -54,19 +62,26 @@ void RunAction::BeginOfRunAction(const G4Run* run)
 
 void RunAction::EndOfRunAction(const G4Run* run)
 {
-    // Write per-thread particle data
+    // Get current thread ID for unique file naming
+    G4int threadID = G4Threading::G4GetThreadId();
+    G4int runID = run->GetRunID();
+    
+    // Write per-thread particle data with thread ID in filename
     std::ostringstream filename;
-    filename << "particle_data_thread" << G4Threading::G4GetThreadId() << ".csv";
+    filename << "particle_data_run" << runID << "_thread" << threadID << ".csv";
     std::ofstream out(filename.str());
-    out << "ParticleType,Energy" << std::endl;
+    out << "ParticleType,Energy[MeV]" << std::endl;
     for (const auto& entry : fParticleData) {
         out << entry.first << "," << entry.second/MeV << std::endl;
     }
     out.close();
+    
+    G4cout << "Thread " << threadID << " wrote " << fParticleData.size() 
+           << " particle entries to " << filename.str() << G4endl;
 
-    // Write per-thread 6D vector data
+    // Write per-thread 6D vector data with thread ID in filename
     std::ostringstream filename6D;
-    filename6D << "6D_vector_thread" << G4Threading::G4GetThreadId() << ".csv";
+    filename6D << "6D_vector_run" << runID << "_thread" << threadID << ".csv";
     std::ofstream out6D(filename6D.str());
     out6D << "Detector,ParticleType,x[cm],px[MeV/c],y[cm],py[MeV/c],z[cm],pz[MeV/c],TotalEnergy[MeV]" << std::endl;
     for (const auto& entry : f6DVectorData) {
@@ -78,16 +93,21 @@ void RunAction::EndOfRunAction(const G4Run* run)
               << std::get<4>(entry)/MeV << std::endl;
     }
     out6D.close();
+    
+    G4cout << "Thread " << threadID << " wrote " << f6DVectorData.size() 
+           << " 6D vector entries to " << filename6D.str() << G4endl;
 }
 
 void RunAction::RecordParticleToExcel(const G4String& name, const G4double& kineticEnergy)
 {
+  // Thread-local storage automatically handles per-thread data
   fParticleData.emplace_back(name, kineticEnergy);
   CountParticle(name);
 }
 
 void RunAction::Record6DVector(G4int detectorID, const G4String& particleName, const G4ThreeVector& position, const G4ThreeVector& momentum, G4double totalEnergy)
 {
+  // Thread-local storage automatically handles per-thread data
   f6DVectorData.emplace_back(detectorID, particleName, position, momentum, totalEnergy);
 }
 
@@ -118,9 +138,12 @@ void RunAction::Close6DVectorFile()
   }
 }
 
- // For file handling
-
 // Function to save the magnetic field data along the Z-axis to a CSV file
+void RunAction::SaveMagneticFieldAlongZ()
+{
+    // Implementation for magnetic field data saving
+    // This can be implemented as needed
+}
 
 /*int main(int argc, char** argv) {
     G4MTRunManager* runManager = new G4MTRunManager;
