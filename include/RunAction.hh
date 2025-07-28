@@ -51,13 +51,11 @@ class RunAction : public G4UserRunAction
     std::map<G4String, int> fSecondaryParticles;
     std::map<G4String, int> fParticleCounts;  // For tracking all particles
     std::ofstream fOutputFile;
-    
-    // File stream for 6D vector output
-    std::ofstream file6DVector;
 
     // Thread-local storage for per-thread data collection
     static thread_local std::vector<std::pair<G4String, G4double>> fParticleData;
     static thread_local std::vector<std::tuple<G4int, G4String, G4ThreeVector, G4ThreeVector, G4double>> f6DVectorData;
+    static thread_local std::ofstream f6DVectorFile;
     
     // Mutex for thread-safe operations
     std::mutex fDataMutex;
