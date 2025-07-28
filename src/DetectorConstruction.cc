@@ -126,6 +126,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     G4Material* graphite_mat = nist->FindOrBuildMaterial("G4_GRAPHITE");
     G4Material* tungsten_mat = nist->FindOrBuildMaterial("G4_W");
     G4Material* beryllium = nist->FindOrBuildMaterial("G4_Be");
+    G4Material* copper = nist->FindOrBuildMaterial("G4_Cu");
     G4Material* scintillator_mat = nist->FindOrBuildMaterial("G4_Ar");
     G4Material* rfcavity_mat = nist->FindOrBuildMaterial("G4_Galactic");
     
@@ -150,7 +151,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
     G4VPhysicalVolume* physWorld = new G4PVPlacement(nullptr, G4ThreeVector(), logicWorld,
                                                     "World", nullptr, false, 0, true);
-
+    
+    // Instantiate the RF Cavity system in the mother volume`
+    
+    
+    
     // ========== TUNGSTEN TARGET ==========
     G4double block_x = 10*cm;
     G4double block_y = 10*cm;
@@ -187,12 +192,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     for(G4double z = startPos+length/2; z <= endPos; z +=length) {
         G4double s = z-startPos;
         G4double R_inner = R_start*std::exp(k*std::pow(s/bore_length, 0.25));
-        G4ThreeVector fBore_position = G4ThreeVector(0, 0, z);
         // Tungsten carbide lining 
-        G4Tubs* bore = new G4Tubs("Bore"+std::to_string(bore_number), R_inner, 70*cm, length, 0*deg, 360*deg);
-        G4LogicalVolume* logicBore = new G4LogicalVolume(bore, tungstenCarbide, "Bore"+std::to_string(bore_number));
+        G4Tubs* bore = new G4Tubs("Bore"+std::to_string(bore_number), R_inner, 70*cm, length/2, 0*deg, 360*deg);
+        G4LogicalVolume* logicBore = new G4LogicalVolume(bore, tungsten_mat, "Bore"+std::to_string(bore_number));
+        G4ThreeVector fBore_position = G4ThreeVector(0, 0, z);
         G4VisAttributes* Bore = new G4VisAttributes(G4Color(0.5,0.5,0.5,1.0)); //Grey
-        new G4PVPlacement(nullptr, fBore_position, logicBore, "Bore", logicWorld, false, 0, false);
+        new G4PVPlacement(nullptr, fBore_position, logicBore, "Bore"+std::to_string(bore_number), logicWorld, false, bore_number, true);
         Bore->SetVisibility(true);
         logicBore->SetVisAttributes(Bore);
         bore_number++;
@@ -510,37 +515,21 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
         52*ampere,
         fWorldLogical
     );
-
-
-
-
-
-    // ========== MOMENTUM CHICANE ==========
-    /*fMomentumChicane->ConfigureChicane(
-        1900*cm,     // Start Z (early in beamline)
-        40*cm,      // Magnet length
-        20*cm,      // Separation
-        0.25*tesla,  // Field strength
-        100*cm,      // Width
-        100*cm       // Height
-    );
-    fMomentumChicane->BuildChicane(fWorldLogical);
-    */
-
-    //========= Tungsten Aperture ====
-    //G4double tungstenAperture_position = 80*meter;
-    //G4Tubs* tungstenAperture = new G4Tubs("TungstenAperture", 5*cm, 120*cm, 2*cm, 0*deg, 360*deg);
-    //G4LogicalVolume* logicTungstenAperture = new G4LogicalVolume(tungstenAperture, tungsten_mat, "TungstenAperture");
-    //fTungstenApertureVolume = logicTungstenAperture;
-    //fTungstenAperturePosition = G4ThreeVector(0, 0, tungstenAperture_position);
-    //new G4PVPlacement(nullptr, fTungstenAperturePosition, logicTungstenAperture, "TungstenAperture", logicWorld, false, 0, false);
+    
+    // ========== RF CAVITY  ==========
+    new RFCavityField(logicWorld, 4.22*m, 90*megahertz);
+    new RFCavityField(logicWorld, 4.35*m, 90*megahertz);
+    new RFCavityField(logicWorld, 4.48*m, 90*megahertz);
+    new RFCavityField(logicWorld, 10.78*m, 50*megahertz);
+    new RFCavityField(logicWorld, 10.90*m, 50*megahertz);
+    new RFCavityField(logicWorld, 11.03*m, 50*megahertz);
 
 
     // ========== DETECTORS ==========
     G4double detector_thickness = 0.1*cm;
 
     // Detector 1: Before momentum chicane
-    G4double detector1_position = 4.51*meter;
+    G4double detector1_position = 4.6*meter;
     G4Tubs* solidDetector1 = new G4Tubs("Detector1", 0*cm, 70*cm, 0.5*detector_thickness, 0*deg, 360*deg);
     G4LogicalVolume* logicDetector1 = new G4LogicalVolume(solidDetector1, scintillator_mat, "Detector1");
     fDetector1Volume = logicDetector1;
@@ -548,7 +537,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     new G4PVPlacement(nullptr, fDetector1Position, logicDetector1, "Detector1", logicWorld, false, 0, false);
 
     // Detector 2: After momentum chicane, before solenoid
-    G4double detector2_position = 10.975*meter;
+    G4double detector2_position = 11.0*meter;
     G4Tubs* solidDetector2 = new G4Tubs("Detector2", 0*cm, 70*cm, 0.5*detector_thickness, 0*deg, 360*deg);
     G4LogicalVolume* logicDetector2 = new G4LogicalVolume(solidDetector2, scintillator_mat, "Detector2");
     fDetector2Volume = logicDetector2;
@@ -571,40 +560,9 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     fDetector4Position = G4ThreeVector(0, 0, detector4_position);
     new G4PVPlacement(nullptr, fDetector4Position, logicDetector4, "Detector4", logicWorld, false, 0, false);
 
-    // ========== NEW COLLIMATION SYSTEM ==========
-    //CreateCollimationSystem();
-
-
-    // ========== RF CAVITY  ==========
-    G4double rfcavity_radius = 30*cm;
-    G4double rfcavity_length = 20*cm;
-    G4double rfcavity_position = -5*m;  // Positioned after detectors
-
-    G4Tubs* solidRFCavity = new G4Tubs("RFCavity", 0*cm, rfcavity_radius, 0.5*rfcavity_length, 0*deg, 360*deg);
-    G4LogicalVolume* logicRFCavity = new G4LogicalVolume(solidRFCavity, rfcavity_mat, "RFCavity");
-    fRFCavityVolume = logicRFCavity;
-    new G4PVPlacement(nullptr, G4ThreeVector(0, 0, rfcavity_position), logicRFCavity,
-                     "RFCavity", logicWorld, false, 0, false);
-
     // ========== VISUALIZATION ==========
     G4VisAttributes* tungsten_vis_att = new G4VisAttributes(G4Colour(0.5, 0.5, 0.5));
     logicTungsten->SetVisAttributes(tungsten_vis_att);
-    
-    
-    /*
-    G4VisAttributes* tungstenBore = new G4VisAttributes(G4Color(0.5,0.5,0.5,1.0)); //Grey
-    tungstenBore->SetVisibility(true);
-    logicBore->SetVisAttributes(tungstenBore);
-    */
-    /* 
-    G4VisAttributes* tungstenBore_2 = new G4VisAttributes(G4Color(0.5,0.5,0.5,1.0)); //Grey
-    tungstenBore_2->SetVisibility(true);
-    logicBore_2->SetVisAttributes(tungstenBore_2);
-    
-    G4VisAttributes* tungstenBore_3 = new G4VisAttributes(G4Color(0.5,0.5,0.5,1.0)); //Grey
-    tungstenBore_3->SetVisibility(true);
-    logicBore_3->SetVisAttributes(tungstenBore_3);
-    */
 
     G4VisAttributes* detector1_vis_att = new G4VisAttributes(G4Colour(1.0, 0.0, 0.0));
     detector1_vis_att->SetVisibility(true);
@@ -627,11 +585,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     gunVis->SetForceSolid(true);
     gunLog->SetVisAttributes(gunVis);
 
-    G4VisAttributes* rfcavity_vis_att = new G4VisAttributes(G4Colour(1.0, 0.5, 0.0, 0.7));
-    rfcavity_vis_att->SetVisibility(true);
-    rfcavity_vis_att->SetForceSolid(true);
-    logicRFCavity->SetVisAttributes(rfcavity_vis_att);
-
     G4VisAttributes* world_vis_att = new G4VisAttributes(G4Colour(1.0, 1.0, 1.0, 0.1));
     world_vis_att->SetVisibility(true);
     world_vis_att->SetForceWireframe(true);
@@ -643,297 +596,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     return physWorld;
 }
 
-void DetectorConstruction::CreateInitialSolenoid(G4double start, G4double len)
-{
-    G4cout << "\n========== Creating Initial Solenoid (Ramp-Up Field) ==========" << G4endl;
-
-    // Solenoid parameters
-    G4double solenoid_start_z = start;
-
-    G4double solenoid_length = len;  // 180 cm
-    G4double solenoid_end_z = start+len;
-    G4double solenoid_center_z = (solenoid_start_z + solenoid_end_z) / 2.0;
-    G4double solenoid_outer_radius = 20*cm;
-    G4double coil_thickness = 10*cm;
-    G4double field_strength = 7*tesla;
-
-    // Materials
-    G4NistManager* nist = G4NistManager::Instance();
-    G4Material* coil_material = nist->FindOrBuildMaterial("G4_Cu");
-    G4Material* vacuum_material = nist->FindOrBuildMaterial("G4_AIR");
-
-    // Geometry: coil and vacuum
-    G4Tubs* coilSolid = new G4Tubs("InitialSolenoidCoil",
-                                   solenoid_outer_radius - coil_thickness,
-                                   solenoid_outer_radius,
-                                   solenoid_length / 2.0,
-                                   0, 360*deg);
-
-    G4Tubs* vacuumSolid = new G4Tubs("InitialSolenoidVacuum",
-                                     0,
-                                     solenoid_outer_radius - coil_thickness,
-                                     solenoid_length / 2.0,
-                                     0, 360*deg);
-
-    G4LogicalVolume* coilLogical = new G4LogicalVolume(coilSolid, coil_material, "InitialSolenoidCoil");
-    G4LogicalVolume* vacuumLogical = new G4LogicalVolume(vacuumSolid, vacuum_material, "InitialSolenoidVacuum");
-    fInitialSolenoidVolume = vacuumLogical;
-
-    new G4PVPlacement(nullptr, G4ThreeVector(0, 0, solenoid_center_z), coilLogical,
-                      "InitialSolenoidCoil", fWorldLogical, false, 0, false);
-
-    new G4PVPlacement(nullptr, G4ThreeVector(0, 0, solenoid_center_z), vacuumLogical,
-                      "InitialSolenoidVacuum", fWorldLogical, false, 0, false);
-
-    //
-    // Magnetic field: cosine ramp-up from 0 T → 7 T
-    //
-    class RampUpField : public G4MagneticField {
-    public:
-        RampUpField(G4double Bmax, G4double z0, G4double length)
-            : B0(Bmax), z_start(z0), L(length) {}
-
-        void GetFieldValue(const G4double point[4], G4double* Bfield) const override {
-            G4double z = point[2];
-
-            if (z < z_start) {
-                Bfield[2] = 0.0;
-            } else if (z >= z_start && z <= z_start + L) {
-                G4double arg = M_PI * (z - z_start) / L;
-                Bfield[2] = 0.5 * B0 * (1.0 - std::cos(arg));
-            } else {
-                Bfield[2] = B0;
-            }
-
-            Bfield[0] = 0.0;
-            Bfield[1] = 0.0;
-        }
-
-    private:
-        G4double B0, z_start, L;
-    };
-
-    fInitialSolenoidField = new RampUpField(field_strength, solenoid_start_z, solenoid_length);
-    fInitialSolenoidFieldManager = new G4FieldManager(fInitialSolenoidField);
-
-    G4Mag_UsualEqRhs* equation = new G4Mag_UsualEqRhs(fInitialSolenoidField);
-    G4ClassicalRK4* stepper = new G4ClassicalRK4(equation);
-    G4double minStep = 0.005*mm;
-
-    G4MagInt_Driver* driver = new G4MagInt_Driver(minStep, stepper, stepper->GetNumberOfVariables());
-    G4ChordFinder* chordFinder = new G4ChordFinder(driver);
-
-    fInitialSolenoidFieldManager->SetChordFinder(chordFinder);
-    fInitialSolenoidFieldManager->SetDetectorField(fInitialSolenoidField);
-    fInitialSolenoidFieldManager->SetDeltaOneStep(0.01*mm);  // Increased to reduce zero-step warnings
-    fInitialSolenoidFieldManager->SetDeltaIntersection(0.001*mm);
-
-    vacuumLogical->SetFieldManager(fInitialSolenoidFieldManager, true);
-
-    //
-    // Visualization
-    //
-    auto* coilVis = new G4VisAttributes(G4Colour(0.0, 0.8, 0.2, 0.8));
-    coilVis->SetVisibility(true);
-    coilVis->SetForceSolid(true);
-    coilLogical->SetVisAttributes(coilVis);
-
-    auto* vacuumVis = new G4VisAttributes(G4Colour(0.9, 0.9, 0.9, 0.1));
-    vacuumVis->SetVisibility(true);
-    vacuumVis->SetForceWireframe(true);
-    vacuumLogical->SetVisAttributes(vacuumVis);
-
-    G4cout << "Initial solenoid created (with ramp-up field):" << G4endl;
-    G4cout << "  Z range: " << solenoid_start_z/cm << " to " << solenoid_end_z/cm << " cm" << G4endl;
-    G4cout << "  Radius: " << solenoid_outer_radius/cm << " cm" << G4endl;
-    G4cout << "  Field: 0 → " << field_strength/tesla << " T (cosine ramp-up in z)" << G4endl;
-    G4cout << "============================================================\n" << G4endl;
-}
-
-
-void DetectorConstruction::CreateTaperedSolenoid(G4double start, G4double len)
-{
-    G4cout << "\n========== Creating Tapered Solenoid ==========" << G4endl;
-
-    // Parameters
-    G4double z_start = start;
-    G4double length = len;
-    G4double z_end = z_start+len;
-    G4double center_z = (z_start + z_end) / 2.0;
-
-    G4double outer_radius = 20*cm;
-    G4double coil_thickness = 10*cm;
-    G4double B0 = 7*tesla;
-
-    // Materials
-    G4NistManager* nist = G4NistManager::Instance();
-    G4Material* coil_material = nist->FindOrBuildMaterial("G4_Cu");
-    G4Material* vacuum_material = nist->FindOrBuildMaterial("G4_AIR");
-
-    // Geometry
-    G4Tubs* coilSolid = new G4Tubs("TaperedSolenoidCoil",
-                                   outer_radius - coil_thickness,
-                                   outer_radius,
-                                   length / 2.0,
-                                   0, 360*deg);
-
-    G4Tubs* vacuumSolid = new G4Tubs("TaperedSolenoidVacuum",
-                                     0,
-                                     outer_radius - coil_thickness,
-                                     length / 2.0,
-                                     0, 360*deg);
-
-    G4LogicalVolume* coilLogical = new G4LogicalVolume(coilSolid, coil_material, "TaperedSolenoidCoil");
-    G4LogicalVolume* vacuumLogical = new G4LogicalVolume(vacuumSolid, vacuum_material, "TaperedSolenoidVacuum");
-    fInitialSolenoidVolume = vacuumLogical;
-
-    // Placement
-    new G4PVPlacement(nullptr, G4ThreeVector(0, 0, center_z), coilLogical,
-                      "TaperedSolenoidCoil", fWorldLogical, false, 0, false);
-
-    new G4PVPlacement(nullptr, G4ThreeVector(0, 0, center_z), vacuumLogical,
-                      "TaperedSolenoidVacuum", fWorldLogical, false, 0, false);
-
-    //
-    // Magnetic Field: Cosine-Squared Taper from B0 to 0
-    //
-    class LocalTaperedField : public G4MagneticField {
-    public:
-        LocalTaperedField(G4double Bpeak, G4double z0, G4double taperLen)
-            : B0(Bpeak), z_start(z0), L(taperLen) {}
-
-        void GetFieldValue(const G4double point[4], G4double* Bfield) const override {
-            G4double z = point[2];
-            if (z < z_start) {
-                Bfield[0] = 0.0; Bfield[1] = 0.0; Bfield[2] = B0;
-            } else if (z >= z_start && z <= z_start + L) {
-                G4double factor = 0.5 * (1.0 + std::cos(M_PI * (z - z_start) / L));
-                Bfield[0] = 0.0;
-                Bfield[1] = 0.0;
-                Bfield[2] = B0 * factor;
-            } else {
-                Bfield[0] = 0.0; Bfield[1] = 0.0; Bfield[2] = 0.0;
-            }
-        }
-
-    private:
-        G4double B0, z_start, L;
-    };
-
-    fInitialSolenoidField = new LocalTaperedField(B0, z_start, length);
-    fInitialSolenoidFieldManager = new G4FieldManager(fInitialSolenoidField);
-
-    G4Mag_UsualEqRhs* equation = new G4Mag_UsualEqRhs(fInitialSolenoidField);
-    G4ClassicalRK4* stepper = new G4ClassicalRK4(equation);
-    G4double minStep = 0.005*mm;
-
-    G4MagInt_Driver* driver = new G4MagInt_Driver(minStep, stepper, stepper->GetNumberOfVariables());
-    G4ChordFinder* chordFinder = new G4ChordFinder(driver);
-
-    fInitialSolenoidFieldManager->SetChordFinder(chordFinder);
-    fInitialSolenoidFieldManager->SetDetectorField(fInitialSolenoidField);
-    fInitialSolenoidFieldManager->SetDeltaOneStep(0.01*mm);  // Increased to reduce zero-step warnings
-    fInitialSolenoidFieldManager->SetDeltaIntersection(0.0001*mm);
-
-    vacuumLogical->SetFieldManager(fInitialSolenoidFieldManager, true);
-
-    //
-    // Visualization
-    //
-    auto* coilVis = new G4VisAttributes(G4Colour(0.3, 0.4, 0.9, 0.7));
-    coilVis->SetVisibility(true);
-    coilVis->SetForceSolid(true);
-    coilLogical->SetVisAttributes(coilVis);
-
-    auto* vacuumVis = new G4VisAttributes(G4Colour(0.9, 0.9, 0.9, 0.1));
-    vacuumVis->SetVisibility(true);
-    vacuumVis->SetForceWireframe(true);
-    vacuumLogical->SetVisAttributes(vacuumVis);
-
-    G4cout << "Tapered solenoid created:" << G4endl;
-    G4cout << "  Z: " << z_start/cm << " → " << z_end/cm << " cm" << G4endl;
-    G4cout << "  Radius: " << outer_radius/cm << " cm" << G4endl;
-    G4cout << "  Field peak: " << B0/tesla << " T (z-direction, tapered)" << G4endl;
-    G4cout << "============================================================\n" << G4endl;
-}
-
-
-
-void DetectorConstruction::CreateCollimationSystem()
-{
-    CreatePrimaryCollimator();
-    CreateSecondaryCollimator();
-
-    G4cout << "\n========== Collimation System Created ==========" << G4endl;
-    G4cout << "Primary collimator: Z = 452cm, aperture = 25cm" << G4endl;
-    G4cout << "Secondary collimator: Z = 480cm, aperture = 15cm" << G4endl;
-    G4cout << "===============================================\n" << G4endl;
-}
-
-void DetectorConstruction::CreatePrimaryCollimator()
-{
-    G4NistManager* nist = G4NistManager::Instance();
-    G4Material* tungsten_mat = nist->FindOrBuildMaterial("G4_W");
-
-    G4double collimator1_z = 1952*cm;
-    G4double collimator_thickness = 5*cm;
-    G4double aperture_radius = 25*cm;
-    G4double outer_radius = 20*cm;
-
-    G4Tubs* solidCollimator1 = new G4Tubs("PrimaryCollimator",
-                                          aperture_radius, outer_radius, collimator_thickness/2,
-                                          0*deg, 360*deg);
-
-    G4LogicalVolume* logicCollimator1 = new G4LogicalVolume(solidCollimator1, tungsten_mat, "PrimaryCollimator");
-    fPrimaryCollimatorVolume = logicCollimator1;
-
-    new G4PVPlacement(nullptr, G4ThreeVector(0, 0, collimator1_z), logicCollimator1,
-                     "PrimaryCollimator", fWorldLogical, false, 0, false);
-
-    G4VisAttributes* collimator1_vis = new G4VisAttributes(G4Colour(0.8, 0.8, 0.0, 0.8));
-    collimator1_vis->SetVisibility(true);
-    collimator1_vis->SetForceSolid(true);
-    logicCollimator1->SetVisAttributes(collimator1_vis);
-}
-
-void DetectorConstruction::CreateSecondaryCollimator()
-{
-    G4NistManager* nist = G4NistManager::Instance();
-    G4Material* tungsten_mat = nist->FindOrBuildMaterial("G4_W");
-
-    G4double collimator2_z = 1920*cm;
-    G4double collimator_thickness = 5*cm;
-    G4double aperture_radius = 15*cm;
-    G4double outer_radius = 20*cm;
-
-    G4Tubs* solidCollimator2 = new G4Tubs("SecondaryCollimator",
-                                          aperture_radius, outer_radius, collimator_thickness/2,
-                                          0*deg, 360*deg);
-
-    G4LogicalVolume* logicCollimator2 = new G4LogicalVolume(solidCollimator2, tungsten_mat, "SecondaryCollimator");
-    fSecondaryCollimatorVolume = logicCollimator2;
-
-    new G4PVPlacement(nullptr, G4ThreeVector(0, 0, collimator2_z), logicCollimator2,
-                     "SecondaryCollimator", fWorldLogical, false, 0, false);
-
-    G4VisAttributes* collimator2_vis = new G4VisAttributes(G4Colour(0.9, 0.7, 0.0, 0.8));
-    collimator2_vis->SetVisibility(true);
-    collimator2_vis->SetForceSolid(true);
-    logicCollimator2->SetVisAttributes(collimator2_vis);
-}
-
-void DetectorConstruction::ConstructSDandField()
-{
-    if (!fMomentumChicane) {
-        G4cerr << "Error: New systems not initialized!" << G4endl;
-        return;
-    }
-
-    // New systems handle their own magnetic fields automatically
-    fMomentumChicane->AnalyzeChicane();
-
-    G4cout << "All magnetic fields configured successfully!" << G4endl;
-}
 
 void DetectorConstruction::AnalyzeCompleteSystem()
 {

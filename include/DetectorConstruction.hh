@@ -7,6 +7,7 @@
 #include "G4MagneticField.hh"
 #include "G4FieldManager.hh"
 #include "SolenoidSystem.hh"
+#include "RFCavityField.hh"
 #include "MomentumChicane.hh"
 
 class G4VPhysicalVolume;
@@ -19,7 +20,6 @@ public:
     DetectorConstruction(G4double g1 = 0.0, G4double g2 = 0.0);
     ~DetectorConstruction() override;
     G4VPhysicalVolume* Construct() override;
-    void ConstructSDandField() override;
 
     // Original getters
     G4LogicalVolume* GetScoringVolume() const { return fScoringVolume; }
@@ -121,33 +121,7 @@ private:
     G4ThreeVector fDetector4Position;
 
     G4double fGap1, fGap2;
-
-    // New methods
-    void CreateInitialSolenoid(G4double start, G4double len);
-    void CreateTaperedSolenoid(G4double start, G4double len);
-    void CreateCollimationSystem();
-    void CreatePrimaryCollimator();
-    void CreateSecondaryCollimator();
 };
 
-// Keep original uniform magnetic field class
-class UniformMagField : public G4MagneticField
-{
-public:
-    UniformMagField(const G4ThreeVector& fieldVector) : fFieldValue(fieldVector) {}
-    virtual ~UniformMagField() {}
-
-    virtual void GetFieldValue(const G4double[4], G4double* field) const override {
-        field[0] = fFieldValue.x();
-        field[1] = fFieldValue.y();
-        field[2] = fFieldValue.z();
-        field[3] = 0.0;
-        field[4] = 0.0;
-        field[5] = 0.0;
-    }
-
-private:
-    G4ThreeVector fFieldValue;
-};
 
 #endif

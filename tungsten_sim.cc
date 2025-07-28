@@ -9,7 +9,6 @@
 #include "G4PhysicalVolumeStore.hh"
 #include "G4SolidStore.hh"
 #include "G4RegionStore.hh"
-#include "G4GDMLParser.hh"
 #include "G4GenericBiasingPhysics.hh"
 #include "G4EmStandardPhysics.hh"
 #include "G4EmExtraPhysics.hh"
